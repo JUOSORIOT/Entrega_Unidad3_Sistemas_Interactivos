@@ -21,22 +21,29 @@ unsigned int uiCrc16Cal(unsigned char const *pucY, unsigned char ucX)
   }
   return uiCrcValue;
 }
-
-
-
+float getFloat(byte packet[],byte i)
+{
+  union u_tag{
+    byte bin[4];
+    float num;
+  } u;
+  u.bin[0] = packet[i];
+  u.bin[1] = packet[i+1];
+  u.bin[2] = packet[i+2];
+  u.bin[3] = packet[i+3];
+  return u.num;
+}
 void taskCom() {
   static uint8_t state = 1;
-  unsigned char ab[1]={0x38};
   static float numero_1 = 0.0;
-  static uint8_t arreglo_1[4] = {0};
   static float numero_2 = 0.0;
-  static uint8_t arreglo_2[4] = {0};
+  static float resultado = 0.0;
   static uint8_t bufferRx[10] = {0};
   static uint8_t dataCounter = 0;
   //Serial.write(uiCrc16Cal(ab,1));
   switch (state) {
   case 1:
-    if(Serial.available())
+    while(Serial.available())
     {
       uint8_t dataRx = Serial.read();
        
@@ -48,36 +55,54 @@ void taskCom() {
             Serial.write(bufferRx[i]);
           }
           Serial.write(uiCrc16Cal(bufferRx,9));
-          //state = 2;
+          if((char)bufferRx[9] == (char)uiCrc16Cal(bufferRx,9))
+          {
+            state = 2;            
+          }          
       }
       else
       {
           bufferRx[dataCounter] = dataRx;
           dataCounter++;              
-      } 
-      
-      
-      
-      
-      
+      }     
     }
     break;
   case 2:
-    //do something when var equals 2
+    numero_1 = getFloat(bufferRx, 0);
+    numero_2 = getFloat(bufferRx, 4);    
+    Serial.println(numero_1);
+    Serial.println(numero_2);
+    Serial.println((char)bufferRx[8]);
+    if(((char)bufferRx[8])== '+')
+    {
+      resultado = numero_1 + numero_2;
+    }
+    else if(((char)bufferRx[8])== '-')
+    {
+      resultado = numero_1 - numero_2;
+    }
+    else if(((char)bufferRx[8])== '*')
+    {
+      resultado = numero_1 * numero_2;
+    }
+    else if(((char)bufferRx[8])== '/')
+    {
+      resultado = numero_1 / numero_2;
+    }
+
+    Serial.println(resultado);
+    Serial.println("Llegamos al estado 2, Felicidades");
+    state = 1;
     break;
   default:
     // if nothing else matches, do the default
     // default is optional
     break;
-}
-  
+}  
 }
 void setup() {
   Serial.begin(115200);
 }
-
-
-
 void loop() {
   taskCom();
 }
