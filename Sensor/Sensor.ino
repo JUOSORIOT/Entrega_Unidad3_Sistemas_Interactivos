@@ -38,6 +38,7 @@ void taskCom() {
   static float numero_1 = 0.0;
   static float numero_2 = 0.0;
   static float resultado = 0.0;
+  static uint8_t arrayResultado[5] = {0};
   static uint8_t bufferRx[10] = {0};
   static uint8_t dataCounter = 0;
   //Serial.write(uiCrc16Cal(ab,1));
@@ -92,13 +93,18 @@ void taskCom() {
 
     Serial.println(resultado);
     Serial.println("Llegamos al estado 2, Felicidades");
+    state = 3;
+    break;
+  case 3:
+    memcpy(arrayResultado, (uint8_t *)&resultado,4);
+    arrayResultado[4] = uiCrc16Cal(arrayResultado,4);
+    Serial.write(arrayResultado,5);
     state = 1;
     break;
   default:
-    // if nothing else matches, do the default
-    // default is optional
+    Serial.print("Si estas aqui posees problemas");
     break;
-}  
+  }  
 }
 void setup() {
   Serial.begin(115200);
